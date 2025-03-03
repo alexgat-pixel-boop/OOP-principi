@@ -1,0 +1,98 @@
+import pandas as pd
+
+class Objekts:
+    def __init__(self, nosaukums, apraksts):
+        self.nosaukums = nosaukums
+        self.apraksts = apraksts
+
+    def paradi_info(self):
+        return f"Objekts: {self.nosaukums}, Apraksts: {self.apraksts}"
+
+class Gramata(Objekts):
+    def __init__(self, nosaukums, apraksts, autors, iznaksanas_gads):
+        super().__init__(nosaukums, apraksts)
+        self.autors = autors
+        self.iznaksanas_gads = iznaksanas_gads
+
+    def paradi_info(self):
+        info = super().paradi_info()
+        return f"{info}, Autors: {self.autors}, Iznākšanas gads: {self.iznaksanas_gads}"
+
+class Gramatnica:
+    def __init__(self):
+        self.gramatas_df = pd.DataFrame(columns=["Nosaukums", "Apraksts", "Autors", "Iznākšanas gads"])
+
+    def pievienot_gramatu(self, gramata):
+        new_data = {
+            "Nosaukums": gramata.nosaukums,
+            "Apraksts": gramata.apraksts,
+            "Autors": gramata.autors,
+            "Iznākšanas gads": gramata.iznaksanas_gads
+        }
+        self.gramatas_df = pd.concat([self.gramatas_df, pd.DataFrame([new_data])], ignore_index=True)
+
+    def paradit_gramatas(self):
+        return self.gramatas_df
+
+# Fajls run.py
+
+import pandas as pd
+from models import Gramata, Gramatnica
+
+CSV_FILENAME = "gramatas.csv"
+
+def saglabat_gramatas(gramatnica):
+    gramatnica.gramatas_df.to_csv(CSV_FILENAME, index=False)
+
+def ieladet_gramatas(gramatnica):
+    try:
+        df = pd.read_csv(CSV_FILENAME)
+        for _, row in df.iterrows():
+            gramatia = Gramata(row["Nosaukums"], row["Apraksts"], row["Autors"], int(row["Iznākšanas gads"]))
+            gramatnica.pievienot_gramatu(gramatia)
+    except FileNotFoundError:
+        print("Nav atrasts saglabāts grāmatu saraksts. Sākam ar tukšu kolekciju.")
+    except Exception as e:
+        print(f"Kļūda ielādējot grāmatas: {e}")
+
+def paradit_menu():
+    print("\n--- Grāmatnīcas pārvaldība ---")
+    print("1. Pievienot jaunu grāmatu")
+    print("2. Parādīt visas grāmatas")
+    print("3. Saglabāt un iziet")
+
+def galvena_programma():
+    gramatnica = Gramatnica()
+    ieladet_gramatas(gramatnica)
+
+    while True:
+        paradit_menu()
+        izvele = input("Ievadiet izvēles numuru: ")
+
+        if izvele == "1":
+            nosaukums = input("Ievadiet grāmatas nosaukumu: ")
+            apraksts = input("Ievadiet grāmatas aprakstu: ")
+            autors = input("Ievadiet autora vārdu: ")
+            try:
+                iznaksanas_gads = int(input("Ievadiet iznākšanas gadu: "))
+            except ValueError:
+                print("Kļūda: Iznākšanas gadam jābūt skaitlim!")
+                continue
+            jauna_gramata = Gramata(nosaukums, apraksts, autors, iznaksanas_gads)
+            gramatnica.pievienot_gramatu(jauna_gramata)
+            print("Grāmata veiksmīgi pievienota!")
+
+        elif izvele == "2":
+            print("\nPašreizējais grāmatu saraksts:")
+            print(gramatnica.paradit_gramatas())
+
+        elif izvele == "3":
+            saglabat_gramatas(gramatnica)
+            print("Grāmatas saglabātas! Programma tiek aizvērta.")
+            break
+
+        else:
+            print("Nepareiza izvēle! Lūdzu, mēģiniet vēlreiz.")
+
+if __name__ == "__main__":
+    galvena_programma()
